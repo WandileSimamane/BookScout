@@ -21,37 +21,31 @@ class DetailsViewModel(
     val uiState: StateFlow<DetailsUiState> = _uiState.asStateFlow()
 
     init {
-        savedStateHandle.get<String>("bookId")?.let { bookId ->
+        val bookId: String? = savedStateHandle["bookId"]
+        if (bookId != null) {
             loadBookDetails(bookId)
+        } else {
+            _uiState.update { it.copy(errorMessage = "Missing target book reference.") }
         }
     }
 
-    private fun loadBookDetails(bookId: String) {
+    private fun loadBookDetails(id: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
-            when (val result = bookRepository.searchBooks(bookId, page = 1)) {
-                is NetworkResult.Success -> {
-                    val matchedBook = result.data.firstOrNull { it.id == bookId }
-                    if (matchedBook != null) {
-                        _uiState.update { it.copy(book = matchedBook, isLoading = false) }
-                    } else {
-                        _uiState.update {
-                            it.copy(errorMessage = "Book details not found.", isLoading = false)
-                        }
-                    }
+            when (val result = bookRepository.getBookDetails(id)) {
+                is NetworkResult.Success<*> -> {
+                    _uiState.update { it.copy(book = result.data as? com.example.bookscout.domain.model.Book, isLoading = false) }
                 }
                 is NetworkResult.Error -> {
                     _uiState.update {
                         it.copy(
-                            errorMessage = result.exception.localizedMessage ?: "Failed to load details",
+                            errorMessage = result.exception.localizedMessage ?: "Failed to retrieve book details.",
                             isLoading = false
                         )
                     }
                 }
-                is NetworkResult.Loading -> {
-                    _uiState.update { it.copy(isLoading = true) }
-                }
+                is NetworkResult.Loading -> {}
             }
         }
     }

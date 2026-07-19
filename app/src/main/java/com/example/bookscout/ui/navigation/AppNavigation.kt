@@ -2,7 +2,10 @@ package com.example.bookscout.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -15,8 +18,6 @@ import com.example.bookscout.ui.screens.details.DetailsScreen
 import com.example.bookscout.ui.screens.details.DetailsViewModel
 import com.example.bookscout.ui.screens.settings.SettingsScreen
 import com.example.bookscout.ui.screens.settings.SettingsViewModel
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 
 @Composable
 fun AppNavigation(navController: NavHostController) {
@@ -27,7 +28,14 @@ fun AppNavigation(navController: NavHostController) {
         startDestination = Routes.SEARCH
     ) {
         composable(Routes.SEARCH) {
-            val searchViewModel: SearchViewModel = viewModel()
+            val searchViewModel: SearchViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer {
+                        val savedStateHandle = createSavedStateHandle()
+                        SearchViewModel(savedStateHandle = savedStateHandle)
+                    }
+                }
+            )
             SearchScreen(
                 viewModel = searchViewModel,
                 onBookClick = { bookId ->
@@ -42,8 +50,15 @@ fun AppNavigation(navController: NavHostController) {
         composable(
             route = Routes.DETAILS,
             arguments = listOf(navArgument("bookId") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val detailsViewModel: DetailsViewModel = viewModel()
+        ) {
+            val detailsViewModel: DetailsViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer {
+                        val savedStateHandle = createSavedStateHandle()
+                        DetailsViewModel(savedStateHandle = savedStateHandle)
+                    }
+                }
+            )
             DetailsScreen(
                 viewModel = detailsViewModel,
                 onBackClick = { navController.popBackStack() }

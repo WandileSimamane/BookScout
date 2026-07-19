@@ -12,15 +12,11 @@ object BookRepositoryImpl : BookRepository {
 
     override suspend fun searchBooks(query: String, page: Int): NetworkResult<List<Book>> {
         return try {
-            val response = RetrofitClient.openLibraryApi.searchBooks(
-                query = query,
-                page = page
-            )
+            val response = RetrofitClient.openLibraryApi.searchBooks(query = query, page = page)
 
             if (response.isSuccessful) {
                 val body = response.body()
                 if (body != null) {
-                    // Turn raw DTO documents into clean non-nullable domain models using your mapper
                     val domainBooks = body.docs.map { it.toDomain() }
                     NetworkResult.Success(domainBooks)
                 } else {
@@ -30,10 +26,28 @@ object BookRepositoryImpl : BookRepository {
                 NetworkResult.Error(IOException("Server error occurred with code: ${response.code()}"))
             }
         } catch (e: Exception) {
-            // Crucial: Coroutine cancellations must not be swallowed by generic catch blocks
             if (e is CancellationException) throw e
+            NetworkResult.Error(e)
+        }
+    }
 
-            // Catches connection timeouts (SocketTimeoutException) or no internet (UnknownHostException)
+    override suspend fun getBookDetails(id: String): NetworkResult<Book> {
+        return try {
+            val response = RetrofitClient.openLibraryApi.getBookDetails(id)
+
+            if (response.isSuccessful) {
+                val body = response.body()
+                if (body != null) {
+                    // Uses your existing OpenLibraryBookDto.toDomain() extension function!
+                    NetworkResult.Success(body.toDomain())
+                } else {
+                    NetworkResult.Error(IllegalStateException("API returned an empty details payload."))
+                }
+            } else {
+                NetworkResult.Error(IOException("Server error occurred with code: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
             NetworkResult.Error(e)
         }
     }

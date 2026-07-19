@@ -5,4 +5,5 @@ import com.example.bookscout.utils.NetworkResult
 
 interface BookRepository {
     suspend fun searchBooks(query: String, page: Int): NetworkResult<List<Book>>
+    suspend fun getBookDetails(id: String): NetworkResult<Book>
 }

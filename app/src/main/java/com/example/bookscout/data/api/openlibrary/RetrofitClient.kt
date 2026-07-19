@@ -7,6 +7,7 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import java.util.concurrent.TimeUnit
+import kotlinx.serialization.Serializable
 object RetrofitClient {
 
     private const val BASE_URL = "https://openlibrary.org/"
